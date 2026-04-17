@@ -1,0 +1,96 @@
+size_rules:
+  version: 1
+
+  output_values:
+    - small
+    - medium
+    - large
+
+  primary_dimension: height_cm
+  secondary_dimension: weight_g
+
+  thresholds:
+    height_cm:
+      small_max: 7
+      medium_max: 15
+    weight_g:
+      small_max: 150
+      medium_max: 500
+
+  title_hints:
+    small:
+      - 'малый'
+      - 'маленький'
+      - 'мини'
+      - 'миниатюрный'
+      - 'небольшой'
+      - 'компактный'
+    medium:
+      - 'средний'
+      - 'стандартный'
+    large:
+      - 'большой'
+      - 'крупный'
+      - 'макси'
+      - 'высокий'
+      - 'массивный'
+
+  policy:
+    description: >
+      Размер определяется прежде всего по высоте. Если высота отсутствует,
+      использовать массу. Подсказки из названия могут повышать или понижать
+      уверенность, а при пограничных значениях влиять на итоговый класс.
+
+  decision_order:
+    - 'Если в названии явно указан small hint и нет явного конфликта по высоте, выбрать small.'
+    - 'Если в названии явно указан large hint и нет явного конфликта по высоте, выбрать large.'
+    - 'Если известна height_cm, использовать height thresholds.'
+    - 'Если height_cm нет, использовать weight_g.'
+    - 'Если данных мало, вернуть medium и пометить reason как fallback_default.'
+
+  examples:
+    - input:
+        name: 'Слоник малый'
+        height_cm: 6
+        weight_g: 120
+      output:
+        size_tag: 'small'
+        size_reason: 'title_hint_small + height_small'
+
+    - input:
+        name: 'Лев большой'
+        height_cm: 18
+        weight_g: 900
+      output:
+        size_tag: 'large'
+        size_reason: 'title_hint_large + height_large'
+
+    - input:
+        name: 'Лошадка'
+        height_cm: 11
+        weight_g: 260
+      output:
+        size_tag: 'medium'
+        size_reason: 'height_medium'
+
+    - input:
+        name: 'Черепаха'
+        height_cm: null
+        weight_g: 100
+      output:
+        size_tag: 'small'
+        size_reason: 'weight_small'
+
+    - input:
+        name: 'Фигурка совы'
+        height_cm: null
+        weight_g: null
+      output:
+        size_tag: 'medium'
+        size_reason: 'fallback_default'
+
+  implementation_notes:
+    - 'Нормализовать строку name: lowercase, trim, replace ё->е.'
+    - 'Если значения height_cm или weight_g невалидны, игнорировать их.'
+    - 'Если title hints противоречат числовым данным, числовые данные имеют приоритет.'
+    - 'При сильном конфликте можно вернуть medium и пометить ambiguous_size.'

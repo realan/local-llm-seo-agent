@@ -1,0 +1,22 @@
+size_rules:
+  version: 1
+  output_values: ["small", "medium", "large"]
+  primary_dimension: height_cm
+  secondary_dimension: weight_g
+  thresholds:
+    height_cm:
+      small_max: 7
+      medium_max: 15
+    weight_g:
+      small_max: 100
+      medium_max: 1000
+  title_hints:
+    small: ["малый", "маленький", "мини", "миниатюрный", "небольшой", "компактный"]
+    medium: ["средний", "стандартный"]
+    large: ["большой", "крупный", "макси", "высокий", "массивный"]
+  implementation_notes:
+    - "Normalize name: lowercase, trim, replace ё->е."
+    - "Title hints are checked before numeric thresholds."
+    - "Invalid numeric values are ignored."
+    - "If title strongly conflicts with numeric values, numeric values win."
+    - "If no clear signal, use medium with fallback_default."

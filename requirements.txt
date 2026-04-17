@@ -1,0 +1,18 @@
+# Local LLM SEO Agent Requirements
+# Python 3.11+
+
+# Core dependencies
+requests==2.31.0
+pandas==2.2.0
+openpyxl==3.1.2
+pydantic==2.11.7
+click==8.3.1
+rich==13.7.0
+tenacity==8.2.3
+orjson==3.9.13
+python-dotenv==1.1.0
+PyYAML==6.0.2
+
+# Optional for development/testing
+pytest==7.4.3
+pytest-cov==4.1.0

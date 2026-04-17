@@ -1,0 +1,102 @@
+project:
+  name: local_llm_seo_agent
+  goal: >
+    Build a local AI agent in Python using qwen3.5:4b via Ollama.
+    The agent must solve homework demo tasks and process an Excel
+    souvenir catalog by generating SEO-related fields.
+
+runtime:
+  language: python
+  version: '3.11+'
+
+llm:
+  provider: ollama
+  model: qwen3.5:4b
+  endpoint: 'http://localhost:11434/api/generate'
+
+global_requirements:
+  - local_model_only
+  - structured_output_only
+  - max_steps_required
+  - tool_usage_required
+  - graceful_failure_required
+  - do_not_modify_input_excel
+
+modes:
+  - demo_mode
+  - catalog_mode
+
+python_packages:
+  - requests
+  - pandas
+  - openpyxl
+  - pydantic
+  - typer
+  - rich
+  - tenacity
+  - orjson
+  - python-dotenv
+
+project_structure:
+  - app/main.py
+  - app/agent/runner.py
+  - app/agent/schemas.py
+  - app/agent/prompts.py
+  - app/llm/ollama_client.py
+  - app/tools/base.py
+  - app/tools/calculator.py
+  - app/tools/file_tools.py
+  - app/tools/http_fetch.py
+  - app/tools/excel_tools.py
+  - app/tools/catalog_tools.py
+  - app/services/catalog_processor.py
+  - app/services/symbolism_service.py
+  - app/data/entity_dictionary.yaml
+  - app/data/size_rules.yaml
+  - app/cache/symbolism_cache.json
+  - tests/
+  - samples/
+  - README.md
+
+technical_rules:
+  - normalize_input_column_names
+  - add_missing_output_columns_automatically
+  - save_results_to_new_excel_file
+  - row_level_errors_must_not_stop_full_run
+  - retry_once_on_invalid_model_output
+
+logging:
+  console_fields:
+    - step_number
+    - thought
+    - action
+    - args
+    - observation_summary
+
+cache:
+  file: app/cache/symbolism_cache.json
+  key: entity_type
+  value_fields:
+    - summary
+    - keywords
+    - source_note
+
+acceptance_criteria:
+  - agent_runs_locally_with_qwen3_5_4b_via_ollama
+  - agent_uses_thought_action_observation_loop
+  - agent_uses_at_least_one_tool
+  - agent_enforces_max_step_limit
+  - agent_returns_structured_output_only
+  - demo_mode_solves_3_required_scenarios
+  - catalog_mode_reads_excel_and_writes_new_excel_result
+  - repeated_entity_types_reuse_symbolism_cache
+  - row_level_failures_do_not_stop_full_run
+  - readme_contains_setup_and_usage
+
+mvp_limits:
+  - no_full_web_search_engine
+  - no_large_scale_crawling
+  - no_cms_integration
+  - no_advanced_competitor_seo_analysis
+  - no_parallel_processing
+  - no_frontend_ui

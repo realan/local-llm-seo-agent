@@ -1,0 +1,184 @@
+agent:
+  loop:
+    - thought
+    - action
+    - observation
+    - thought
+
+  max_steps:
+    demo_mode: 5
+    catalog_mode_per_row: 6
+    default: 8
+
+  output_contract:
+    action_response:
+      required_fields:
+        - thought
+        - action
+        - args
+      field_types:
+        thought: string
+        action: string
+        args: object
+
+    final_response:
+      required_fields:
+        - final_answer
+      field_types:
+        final_answer: string
+
+  output_rules:
+    - model_must_return_only_one_structured_object
+    - no_markdown_wrappers
+    - no_free_text_outside_structured_output
+    - no_invented_tool_results
+    - if_task_is_complete_return_final_response
+    - if_tool_is_needed_return_action_response
+
+demo_mode:
+  purpose: satisfy_homework_requirements
+  scenarios:
+    - name: calculator_demo
+      task: 'Calculate (123 + 456) * 2'
+      expected_tools:
+        - calculator
+
+    - name: file_demo
+      task: 'Read samples/test.txt and tell how many lines it has'
+      expected_tools:
+        - read_text_file
+
+    - name: http_demo
+      task: 'Make an HTTP request and return the first 300 characters'
+      expected_tools:
+        - http_get
+
+tools:
+  demo_tools:
+    - name: calculator
+      description: evaluate arithmetic expression
+      inputs:
+        expression: string
+      outputs:
+        result: string
+
+    - name: read_text_file
+      description: read a text file and count lines
+      inputs:
+        file_path: string
+      outputs:
+        content: string
+        line_count: integer
+
+    - name: http_get
+      description: perform HTTP GET request
+      inputs:
+        url: string
+        timeout_sec: integer
+      outputs:
+        status_code: integer
+        text: string
+
+  excel_tools:
+    - name: get_excel_info
+      description: return sheet name, columns, and row count
+      inputs:
+        file_path: string
+        sheet_name: string
+      outputs:
+        sheet_name: string
+        columns: list
+        row_count: integer
+
+    - name: read_excel_row
+      description: read one row from Excel
+      inputs:
+        file_path: string
+        sheet_name: string
+        row_index: integer
+      outputs:
+        row: object
+
+    - name: write_excel_row_fields
+      description: write generated fields into one row of output Excel file
+      inputs:
+        input_file_path: string
+        output_file_path: string
+        sheet_name: string
+        row_index: integer
+        fields: object
+      outputs:
+        success: boolean
+
+  catalog_tools:
+    - name: detect_entity_type
+      description: detect base figurine type using dictionary aliases
+      inputs:
+        name: string
+        category: string
+      outputs:
+        entity_type: string
+        confidence: string
+        matched_alias: string
+
+    - name: classify_size
+      description: classify item size using height, weight, and name hints
+      inputs:
+        name: string
+        height_cm: number
+        weight_g: number
+      outputs:
+        size_tag: string
+        size_reason: string
+
+    - name: build_base_tags
+      description: build base SEO tags from entity, size, material, and category
+      inputs:
+        entity_type: string
+        size_tag: string
+        material: string
+        category: string
+      outputs:
+        tags: list
+
+    - name: load_symbolism_cache
+      description: load cached symbolism by entity type
+      inputs:
+        entity_type: string
+      outputs:
+        found: boolean
+        summary: string
+        keywords: list
+        source_note: string
+
+    - name: save_symbolism_cache
+      description: save symbolism into local cache
+      inputs:
+        entity_type: string
+        summary: string
+        keywords: list
+        source_note: string
+      outputs:
+        success: boolean
+
+implementation_notes:
+  agent_runner:
+    - invoke_model
+    - parse_structured_output
+    - execute_tool
+    - append_step_history
+    - enforce_max_steps
+    - retry_once_if_output_invalid
+
+  llm_client:
+    - send_post_request_to_ollama
+    - pass_prompt_correctly
+    - read_response_text
+    - return_plain_text
+
+  logging:
+    - print_step_number
+    - print_thought
+    - print_action
+    - print_args
+    - print_short_observation_summary

@@ -1,0 +1,7 @@
+This is a test file for the file_read demo scenario.
+It contains multiple lines.
+Line 3
+Line 4
+Line 5
+Each line can be counted by the agent.
+This demonstrates the read_text_file tool functionality.

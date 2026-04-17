@@ -1,0 +1,188 @@
+catalog_mode:
+  purpose: process_souvenir_catalog_excel_file
+  cli_example:
+    command: python -m app.main process-catalog
+    args:
+      input: samples/products.xlsx
+      output: samples/products_result.xlsx
+      sheet: products
+      limit: 10
+
+input_columns:
+  required:
+    - name
+  optional:
+    - category
+    - height_cm
+    - weight_g
+    - material
+    - article
+
+output_columns:
+  - entity_type
+  - entity_confidence
+  - size_tag
+  - size_reason
+  - symbolism_summary
+  - symbolism_source_note
+  - seo_keywords
+  - seo_title
+  - seo_description
+  - product_description
+  - processed_status
+  - processed_error
+
+row_pipeline:
+  - read_row
+  - detect_entity_type
+  - classify_size
+  - build_base_tags
+  - check_symbolism_cache
+  - fetch_symbolism_if_needed
+  - generate_seo_fields
+  - write_output_row
+
+business_logic:
+  entity_detection:
+    source_file: app/data/entity_dictionary.yaml
+    rules:
+      - use_alias_dictionary_as_primary_source
+      - use_simple_heuristic_if_alias_match_fails
+      - if_unresolved_mark_row_as_needs_review
+    confidence_scale:
+      - high
+      - medium
+      - low
+    confidence_rules:
+      - exact_alias_match_is_high
+      - heuristic_match_is_medium
+      - weak_or_partial_match_is_low
+
+  size_classification:
+    source_file: app/data/size_rules.yaml
+    rules:
+      - use_code_not_llm
+      - primary_signal_is_title_hint
+      - secondary_signal_is_weight_g
+      - tertiary_signal_is_height_cm
+      - if_title_contains_small_hint_choose_small_unless_numeric_data_strongly_conflicts
+      - if_title_contains_large_hint_choose_large_unless_numeric_data_strongly_conflicts
+      - if_title_contains_medium_hint_choose_medium_unless_numeric_data_strongly_conflicts
+      - if_weight_g_is_less_than_100_choose_small
+      - if_weight_g_is_greater_than_1000_choose_large
+      - if_height_cm_is_less_than_or_equal_to_7_choose_small
+      - if_height_cm_is_greater_than_15_choose_large
+      - if_no_clear_signal_return_medium
+      - invalid_weight_or_height_values_do_not_fail_row_and_should_be_ignored
+
+  symbolism:
+    grouping_policy:
+      - symbolism_is_grouped_by_base_entity_type
+      - do_not_fetch_separately_for_every_similar_row
+      - check_cache_first
+      - if_cache_miss_fetch_through_http_tool
+      - summarize_neutrally
+      - save_result_to_cache
+    fetch_policy:
+      - use_http_request_for_current_product_position
+      - use_article_as_primary_lookup_identifier
+      - if_article_is_missing_use_name_plus_category_as_fallback_query
+      - save_summary_keywords_and_source_note_to_cache
+    forbidden_claims:
+      - guarantees luck
+      - attracts money
+      - ensures success
+    allowed_style:
+      - traditionally associated with
+      - often seen as a symbol of
+      - commonly linked to
+
+  seo_generation:
+    implementation:
+      - all_seo_fields_are_generated_by_llm
+      - llm_output_must_follow_length_limits
+      - llm_output_must_not_invent_product_facts
+
+    seo_keywords:
+      format: comma_separated_string
+      rules:
+        - generated_by_llm
+        - prefer_entity_type_material_size_and_relevant_symbolism_terms
+        - do_not_use_sku
+        - article_may_be_used_when_helpful
+
+    seo_title:
+      max_length: 80
+      rules:
+        - include_entity_type
+        - include_size_when_useful
+        - include_material_when_available
+
+    seo_description:
+      max_length: 180
+      rules:
+        - one_to_two_sentences
+        - concise
+        - neutral
+
+    product_description:
+      min_length: 350
+      max_length: 650
+      rules:
+        - suitable_for_ecommerce_product_card
+        - mention_entity_type
+        - mention_size
+        - mention_material
+        - mention_short_neutral_symbolism
+        - avoid_cliches
+        - avoid_excessive_marketing_tone
+        - avoid_invented_facts
+
+excel_processing:
+  rules:
+    - read_excel_file
+    - normalize_column_names
+    - add_missing_output_columns
+    - never_modify_input_file
+    - always_write_to_new_output_file
+
+row_status_values:
+  - success
+  - skipped
+  - needs_review
+  - error
+
+row_status_rules:
+  success:
+    - row_processed_and_output_fields_written
+  skipped:
+    - row_is_empty
+    - row_has_no_actionable_content_after_normalization
+  needs_review:
+    - entity_type_not_confidently_detected
+    - seo_output_is_present_but_requires_manual_check
+  error:
+    - required_input_missing
+    - http_request_failed_without_fallback_result
+    - llm_output_invalid_after_retry
+    - excel_write_failed
+
+row_error_examples:
+  - missing_name
+  - entity_not_detected
+  - invalid_height
+  - invalid_weight
+  - invalid_model_output
+  - cache_error
+  - http_lookup_failed
+  - excel_write_failed
+
+build_order:
+  - implement_demo_agent
+  - add_structured_output_parsing
+  - add_excel_tools
+  - add_entity_type_detection
+  - add_size_classification
+  - add_symbolism_cache
+  - add_catalog_processing_pipeline
+  - add_readme_and_samples

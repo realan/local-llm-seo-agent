@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+
+# Virtual environments
+venv/
+.venv/
+
+# Test and tool caches
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment and local secrets
+.env
+
+# Editor / OS files
+.DS_Store
+.vscode/
+
+# Local outputs
+_results/
+
+# Excel outputs
+*_result.xlsx
+results/
+
+# Local scratch files
+test_typer_*.py
