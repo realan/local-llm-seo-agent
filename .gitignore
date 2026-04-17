@@ -20,11 +20,10 @@ htmlcov/
 .vscode/
 
 # Local outputs
-_results/
+
 
 # Excel outputs
 *_result.xlsx
-results/
 
 # Local scratch files
 test_typer_*.py
